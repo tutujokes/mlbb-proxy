@@ -1,5 +1,15 @@
-{
-  "api": {
-    "heroes.js": "// api/heroes.js\n\nexport default async function handler(req, res) {\n  const url = 'https://mlbb-stats.ridwaanhall.com/api/hero-rank/';\n  try {\n    const response = await fetch(url);\n    if (!response.ok) {\n      return res.status(response.status).json({ error: 'Failed to fetch data from MLBB API' });\n    }\n    const data = await response.json();\n\n    // Libera CORS para qualquer dom\u00ednio\n    res.setHeader('Access-Control-Allow-Origin', '*');\n    res.status(200).json(data);\n  } catch (error) {\n    res.status(500).json({ error: 'Proxy server error', details: error.message });\n  }\n}\n"
+export default async function handler(req, res) {
+  const url = 'https://mlbb-stats.ridwaanhall.com/api/hero-rank/?days=7&rank=mythic&size=10&index=2&sort_field=pick_rate&sort_order=asc';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Failed to fetch data from MLBB API' });
+    }
+    const data = await response.json();
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Proxy server error', details: error.message });
   }
 }
