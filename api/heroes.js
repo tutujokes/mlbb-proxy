@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Normalize os parâmetros
+  // Normalize os parâmetros para minúsculo
   const role = req.query.role ? req.query.role.toLowerCase() : undefined;
   const lane = req.query.lane ? req.query.lane.toLowerCase() : undefined;
   const days = req.query.days;
