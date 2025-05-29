@@ -1,65 +1,34 @@
-export default async function handler(req, res) {
-  const {
-    source = 'rank',
-    name,
-    role,
-    lane,
-    days,
-    rank = 'mythic',
-    size = 20,
-    index = 1,
-    sort_field = 'win_rate',
-    sort_order = 'desc'
-  } = req.query;
+const API_URL = "https://mlbb-proxy.vercel.app/api/hero-list/";
 
-  let apiUrl = '';
-
-  try {
-    switch (source) {
-      case 'rank':
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rank/?days=${days || 7}&rank=${rank}&size=${size}&index=${index}&sort_field=${sort_field}&sort_order=${sort_order}`;
-        break;
-
-      case 'position':
-        {
-          const params = new URLSearchParams();
-          if (role) params.append('role', role);
-          if (lane) params.append('lane', lane);
-          params.append('size', size);
-          params.append('index', index);
-          apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-position/?${params.toString()}`;
-        }
-        break;
-
-      case 'list':
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-list/`;
-        break;
-
-      case 'detail':
-      case 'combo':
-      case 'counter':
-      case 'skin':
-      case 'equipment':
-        if (!name) return res.status(400).json({ error: `Parâmetro 'name' obrigatório para '${source}'` });
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-${source}/?name=${encodeURIComponent(name)}`;
-        break;
-
-      default:
-        return res.status(400).json({ error: `Fonte inválida: '${source}'` });
-    }
-
-    console.log(`📡 Requisição → ${apiUrl}`);
-
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Erro ao buscar dados na API MLBB', apiUrl });
-    }
-
-    const data = await response.json();
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro no servidor proxy', details: error.message, apiUrl });
-  }
+function criarCardHeroi(hero) {
+  const card = document.createElement('div');
+  card.className = "card-hero";
+  card.innerHTML = `
+    <a href="heroi.html?name=${encodeURIComponent(hero.name)}">
+      <img src="${hero.head}" alt="${hero.name}">
+      <div>${hero.name}</div>
+    </a>
+  `;
+  return card;
 }
+
+fetch(API_URL)
+  .then(res => res.json())
+  .then(json => {
+    // Ajuste para records
+    const records = json.data && json.data.records ? json.data.records : [];
+    records.sort((a, b) => {
+      const nameA = a.data.main_hero.data.name;
+      const nameB = b.data.main_hero.data.name;
+      return nameA.localeCompare(nameB, 'pt-BR');
+    });
+    const container = document.getElementById('lista-herois');
+    records.forEach(entry => {
+      const hero = entry.data.main_hero.data;
+      const card = criarCardHeroi(hero);
+      container.appendChild(card);
+    });
+  })
+  .catch(() => {
+    document.getElementById('lista-herois').innerHTML = '<p>Erro ao carregar lista de heróis.</p>';
+  });
