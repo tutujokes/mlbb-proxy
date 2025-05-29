@@ -1,10 +1,10 @@
+import heroNameToId from '../utils/heroNameToId.js';
+
 export default async function handler(req, res) {
-  // Libera CORS para qualquer origem
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Trata requisição OPTIONS (pré-flight CORS)
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -30,7 +30,6 @@ export default async function handler(req, res) {
       case 'rank':
         apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rank/?days=${days || 7}&rank=${rank}&size=${size}&index=${index}&sort_field=${sort_field}&sort_order=${sort_order}`;
         break;
-
       case 'position': {
         const params = new URLSearchParams();
         if (role) params.append('role', role);
@@ -40,20 +39,40 @@ export default async function handler(req, res) {
         apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-position/?${params.toString()}`;
         break;
       }
-
       case 'list':
         apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-list/`;
         break;
-
+      // Para endpoints que exigem id no path
       case 'detail':
+      case 'detail-stats':
+      case 'rate':
+      case 'compatibility': {
+        if (!name) return res.status(400).json({ error: `Parâmetro 'name' obrigatório para '${source}'` });
+        const id = await heroNameToId(name);
+        if (!id) return res.status(404).json({ error: "Herói não encontrado" });
+        if (source === 'rate') {
+          // Passa o parâmetro days se vier do frontend
+          const daysParam = days ? `?past-days=${days}` : '';
+          apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rate/${id}/${daysParam}`;
+        } else {
+          apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-${source}/${id}/`;
+        }
+        break;
+      }
+      // Endpoints que realmente usam name (combo, counter, skin, equipment)
       case 'combo':
       case 'counter':
-      case 'skin':
-      case 'equipment':
+      case 'skin': {
         if (!name) return res.status(400).json({ error: `Parâmetro 'name' obrigatório para '${source}'` });
         apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-${source}/?name=${encodeURIComponent(name)}`;
         break;
-
+      }
+      case 'equipment': {
+        if (!name) return res.status(400).json({ error: `Parâmetro 'name' obrigatório para '${source}'` });
+        // se a API oficial pedir id, adapte aqui conforme docs
+        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-equip/?name=${encodeURIComponent(name)}`;
+        break;
+      }
       default:
         return res.status(400).json({ error: `Fonte inválida: '${source}'` });
     }
@@ -68,4 +87,4 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({ error: 'Erro no servidor proxy', details: error.message, apiUrl });
   }
-          }
+}
