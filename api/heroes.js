@@ -1,8 +1,11 @@
 
+import heroNameToId from '../utils/heroNameToId.js';
+
 export default async function handler(req, res) {
   const {
     source = 'rank',
     id,
+    name,
     role,
     lane,
     days,
@@ -12,6 +15,19 @@ export default async function handler(req, res) {
     sort_field = 'win_rate',
     sort_order = 'desc'
   } = req.query;
+
+  let finalId = id;
+
+  if (!finalId && name) {
+    try {
+      finalId = heroNameToId(name);
+      if (!finalId) {
+        return res.status(404).json({ error: 'Herói não encontrado pelo nome informado.' });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: 'Erro ao converter nome para ID.', details: err.message });
+    }
+  }
 
   let apiUrl = '';
 
@@ -31,25 +47,23 @@ export default async function handler(req, res) {
         break;
 
       case 'detail':
-        if (!id) {
-          return res.status(400).json({ error: "Missing hero ID" });
-        }
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail/${id}`;
+        if (!finalId) return res.status(400).json({ error: "Missing hero ID or name" });
+        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail/${finalId}`;
         break;
 
       case 'detail-stats':
-        if (!id) {
-          return res.status(400).json({ error: "Missing hero ID" });
-        }
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail-stats/${id}`;
+        if (!finalId) return res.status(400).json({ error: "Missing hero ID or name" });
+        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail-stats/${finalId}`;
         break;
 
       case 'rate':
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rate/${id}/?past-days=${days || 7}`;
+        if (!finalId) return res.status(400).json({ error: "Missing hero ID or name" });
+        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rate/${finalId}/?past-days=${days || 7}`;
         break;
 
       case 'compatibility':
-        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-compatibility/${id}`;
+        if (!finalId) return res.status(400).json({ error: "Missing hero ID or name" });
+        apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-compatibility/${finalId}`;
         break;
 
       default:
