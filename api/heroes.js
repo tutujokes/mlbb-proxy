@@ -1,5 +1,3 @@
-// api/heroes.js
-
 export default async function handler(req, res) {
   // Libera CORS para qualquer origem
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -60,17 +58,14 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: `Fonte inválida: '${source}'` });
     }
 
-    console.log(`📡 Requisição → ${apiUrl}`);
-
     const response = await fetch(apiUrl);
     if (!response.ok) {
       return res.status(response.status).json({ error: 'Erro ao buscar dados na API MLBB', apiUrl });
     }
 
     const data = await response.json();
-
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Erro no servidor proxy', details: error.message, apiUrl });
   }
-  }
+}
