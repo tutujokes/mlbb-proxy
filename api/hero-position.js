@@ -1,5 +1,3 @@
-import heroNameToId from '../utils/heroNameToId.js';
-
 export default async function handler(req, res) {
   // Libera CORS para qualquer origem
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,16 +32,7 @@ export default async function handler(req, res) {
     }
     const data = await response.json();
 
-    // Adiciona o id do herói a cada registro, baseado no nome
-    if (data.data && Array.isArray(data.data.records)) {
-      data.data.records = data.data.records.map(entry => {
-        const heroData = entry?.data?.hero?.data;
-        if (heroData) {
-          heroData.id = heroNameToId(heroData.name);
-        }
-        return entry;
-      });
-    }
+    // Não precisa fazer mapeamento de nome para id, pois hero_id já vem na resposta
 
     res.status(200).json(data);
   } catch (error) {
