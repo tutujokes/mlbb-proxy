@@ -1,3 +1,5 @@
+import heroNameToId from '../utils/heroNameToId.js';
+
 export default async function handler(req, res) {
   // Libera CORS para qualquer origem
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,6 +33,18 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: 'Erro ao buscar dados de posição', apiUrl });
     }
     const data = await response.json();
+
+    // Adiciona o id do herói a cada registro, baseado no nome
+    if (data.data && Array.isArray(data.data.records)) {
+      data.data.records = data.data.records.map(entry => {
+        const heroData = entry?.data?.hero?.data;
+        if (heroData) {
+          heroData.id = heroNameToId(heroData.name);
+        }
+        return entry;
+      });
+    }
+
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Erro no servidor proxy', details: error.message });
