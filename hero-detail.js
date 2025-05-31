@@ -1,4 +1,4 @@
-// /api/hero-details.js
+// /api/hero-detail.js
 // Proxy endpoint for MLBB API hero detail (by hero_id, 1-127)
 
 export default async function handler(req, res) {
